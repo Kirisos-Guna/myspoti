@@ -1248,6 +1248,21 @@ private fun AboutRow() {
             }
         }
     }
+    // Stable or beta updates (the same choice as in About).
+    var picking by remember { androidx.compose.runtime.mutableStateOf(false) }
+    val beta = com.music.spotui.data.api.UpdateChecker.isBeta
+    Row(
+        Modifier.fillMaxWidth().clickable { picking = true }.padding(horizontal = 20.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.update_channel_title), color = AppText, fontSize = 16.sp)
+            Text(stringResource(R.string.update_channel_detail), color = AppMuted, fontSize = 12.sp)
+        }
+        Text(stringResource(if (beta) R.string.update_channel_beta else R.string.update_channel_stable), color = AppText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+    }
+    if (picking) com.music.spotui.ui.components.UpdateChannelDialog(beta,
+        onPick = { com.music.spotui.data.api.UpdateChecker.setBetaChannel(ctx, it); picking = false }) { picking = false }
 }
 
 /**

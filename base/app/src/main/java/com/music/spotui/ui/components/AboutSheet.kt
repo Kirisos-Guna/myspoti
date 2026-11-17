@@ -121,7 +121,7 @@ private fun UpdateRows() {
 }
 
 @Composable
-private fun UpdateChannelDialog(beta: Boolean, onPick: (Boolean) -> Unit, onDismiss: () -> Unit) {
+internal fun UpdateChannelDialog(beta: Boolean, onPick: (Boolean) -> Unit, onDismiss: () -> Unit) {
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Column(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(tone(0xFF1E1E1E))

@@ -1149,6 +1149,24 @@ private fun AppPage(navController: NavController, back: () -> Unit) {
                 )
             }
         }
+        immersiveGroup("channel") {
+            // Stable or beta updates (the same choice as in About).
+            row {
+                var picking by remember { mutableStateOf(false) }
+                val beta = com.music.spotui.data.api.UpdateChecker.isBeta
+                ImmersiveGroupRow(
+                    stringResource(R.string.update_channel_title),
+                    detail = stringResource(R.string.update_channel_detail),
+                    onClick = { picking = true },
+                    trailing = {
+                        Text(stringResource(if (beta) R.string.update_channel_beta else R.string.update_channel_stable),
+                            color = Immersive.TextSecondary, modifier = Modifier.padding(end = 8.dp))
+                    },
+                )
+                if (picking) com.music.spotui.ui.components.UpdateChannelDialog(beta,
+                    onPick = { com.music.spotui.data.api.UpdateChecker.setBetaChannel(ctx, it); picking = false }) { picking = false }
+            }
+        }
         immersiveGroup("repair") {
             // The hidden Web Player stuck or crashed: rebuild it without leaving the app.
             row {
