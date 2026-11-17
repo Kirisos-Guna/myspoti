@@ -26,7 +26,7 @@ val ABI_NAMES = mapOf("arm64-v8a" to "ARMv8", "armeabi-v7a" to "ARMv7")
  * so their update check, which installs only its own package, opens the release page for these
  * instead of trying an APK it cannot install over itself.
  */
-val APK_NAME = "Orpheon"
+val APK_NAME = "Myspoti"
 
 android {
     testOptions {
@@ -38,16 +38,16 @@ android {
     namespace = "app.myspoti.engine"
     compileSdk = 37
 
-    // Two channels that install side by side: betas ("2.0.0-beta.3") stay "app.orpheon.beta",
-    // signed with the first key, as "Orpheon Beta"; releases are "app.orpheon",
-    // signed with their own key, as "Orpheon". (Provisional ids: the rename from Myspoti.)
+    // Two channels that install side by side: betas ("2.0.0-beta.3") stay "app.myspoti.beta",
+    // signed with the first key, as "Myspoti"; releases are "app.myspoti",
+    // signed with their own key, as "Myspoti".
     // Local builds (no version given) are on the beta side, like the phone test builds.
     val version = (findProperty("appVersionName") as String?) ?: "1.0.0"
     // "-beta" as in UpdateChecker.isBeta, one predicate for the app id, the label and the log stripping.
     val beta = findProperty("appVersionName") == null || version.contains("-beta")
     defaultConfig {
-        applicationId = if (automixLab) "app.myspoti.automixlab" else if (beta) "app.orpheon.beta" else "app.orpheon"
-        manifestPlaceholders["appLabel"] = if (automixLab) "Myspoti Mix Lab" else if (beta) "Orpheon Beta" else "Orpheon"
+        applicationId = if (automixLab) "app.myspoti.automixlab" else if (beta) "app.myspoti.beta" else "app.myspoti"
+        manifestPlaceholders["appLabel"] = if (automixLab) "Myspoti Mix Lab" else "Myspoti"
         // The adb command line (com.music.spotui.cli): betas and debug builds only.
         manifestPlaceholders["cliEnabled"] = beta.toString()
         minSdk = 29
@@ -58,7 +58,7 @@ android {
         // GitHub "owner/repo" whose releases the app checks for updates; empty = off
         // (local builds). CI sets it to the repository it builds.
         // Not in the dev and Mix Lab builds (below): no release carries their app id.
-        buildConfigField("String", "UPDATE_REPO", "\"${if (automixLab) "" else (findProperty("updateRepo") as String?) ?: System.getenv("MYSPOTI_UPDATE_REPO") ?: ""}\"")
+        buildConfigField("String", "UPDATE_REPO", "\"${if (automixLab) "" else (findProperty("updateRepo") as String?) ?: System.getenv("MYSPOTI_UPDATE_REPO") ?: "Kirisos-Guna/myspoti"}\"")
         buildConfigField("String", "APK_NAME", "\"$APK_NAME\"")
         // -Pabis=arm64-v8a: one APK for one phone (the test builds). Without it, the ABI splits below.
         (findProperty("abis") as String?)?.let { ndk { abiFilters += it.split(",") } }
@@ -99,7 +99,7 @@ android {
         debug {
             // Installs next to the release apps (own data, own sign-in).
             if (!automixLab) applicationIdSuffix = ".dev"
-            manifestPlaceholders["appLabel"] = if (automixLab) "Myspoti Mix Lab" else "Orpheon dev"
+            manifestPlaceholders["appLabel"] = if (automixLab) "Myspoti Mix Lab" else "Myspoti"
             manifestPlaceholders["cliEnabled"] = "true"
             buildConfigField("String", "UPDATE_REPO", "\"\"")
         }
@@ -111,7 +111,7 @@ android {
             // beta on the test phone without replacing the signed beta installed there.
             if (findProperty("overDev") != null && !automixLab) {
                 applicationIdSuffix = ".dev"
-                manifestPlaceholders["appLabel"] = "Orpheon dev"
+                manifestPlaceholders["appLabel"] = "Myspoti"
                 buildConfigField("String", "UPDATE_REPO", "\"\"")
             }
             // The Mix Lab stays drivable from the CLI in its optimised build, as in its debug one.
@@ -239,10 +239,10 @@ dependencies {
 }
 /**
  * `./gradlew :app:collectApks` after assembleRelease: the APKs under clear names in
- * build/release-apks/: Orpheon-2.4.0-ARMv8.apk (64-bit phones, almost all of them),
- * Orpheon-2.4.0-ARMv7.apk (32-bit), Orpheon-2.4.0-universal.apk (both) and Orpheon-2.4.0-TV.apk
+ * build/release-apks/: Myspoti-2.4.0-ARMv8.apk (64-bit phones, almost all of them),
+ * Myspoti-2.4.0-ARMv7.apk (32-bit), Myspoti-2.4.0-universal.apk (both) and Myspoti-2.4.0-TV.apk
  * (Android TV: the universal APK, since many TVs run 32-bit apps on a 64-bit chip). Betas are
- * Orpheon-Beta-..., the optimised dev builds Orpheon-dev-...
+ * Myspoti-Beta-..., the optimised dev builds Myspoti-dev-...
  */
 tasks.register("collectApks") {
     mustRunAfter("assembleRelease")

@@ -1,11 +1,10 @@
-# Builds and tests every push / pull request; a "v*" tag publishes signed APKs (arm64-v8a, armeabi-v7a)
-# as a GitHub release (the app's update check reads those releases).
+# Builds and tests every push / pull request. Releases are built and published by hand
+# (signed locally), so the tag-only release job below does not run.
 name: Android
 
 on:
   push:
     branches: [master, main]
-    tags: ["v*"]
   pull_request:
 
 permissions:
@@ -140,13 +139,3 @@ jobs:
           generate_release_notes: true
           # "v2.0.0-beta.1": a pre-release, offered only to beta builds.
           prerelease: ${{ contains(github.ref_name, '-') }}
-
-      # Announces the release on Discord (secret DISCORD_WEBHOOK_URL; nothing posted without it).
-      # A release created with GITHUB_TOKEN triggers no other workflow, hence this step here.
-      - name: Discord announcement
-        continue-on-error: true
-        working-directory: .
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          GITHUB_TOKEN: ${{ github.token }}
-        run: python3 tools/discord_release.py "$GITHUB_REF_NAME"

@@ -259,7 +259,7 @@ private fun SupportDialog(supporter: Boolean, onSupport: () -> Unit, onSponsor: 
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, fontSize = 16.sp,
                 )
             }
-            com.music.spotui.ui.components.GitHubSponsorButton(Modifier.padding(top = 10.dp), onClick = onSponsor)
+            com.music.spotui.ui.components.StarOnGitHubButton(Modifier.padding(top = 10.dp), onClick = onSponsor)
             androidx.compose.material3.Text(
                 androidx.compose.ui.res.stringResource(app.myspoti.engine.R.string.support_decline),
                 color = AppText, fontFamily = com.music.spotui.ui.theme.AppSans,

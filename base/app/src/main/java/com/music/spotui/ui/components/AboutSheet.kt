@@ -40,8 +40,8 @@ import app.myspoti.engine.R
 import com.music.spotui.data.api.SupportReminder
 import com.music.spotui.ui.theme.AppAccent
 
-const val DISCORD_URL = "https://discord.gg/jXKnGVFnGS"
-private val repo get() = BuildConfig.UPDATE_REPO.ifBlank { "kota-zo/myspoti" }
+private val repo get() = BuildConfig.UPDATE_REPO.ifBlank { "Kirisos-Guna/myspoti" }
+val REPO_URL get() = "https://github.com/$repo"
 
 private fun openUrl(context: Context, url: String) {
     runCatching {
@@ -49,7 +49,7 @@ private fun openUrl(context: Context, url: String) {
     }
 }
 
-/** About: the version, the Discord community, the source code and Ko-fi. */
+/** About: the version, the source code and a star on GitHub. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutSheet(onDismiss: () -> Unit) {
@@ -75,33 +75,26 @@ fun AboutSheet(onDismiss: () -> Unit) {
             }
             Text(stringResource(R.string.about_free), color = AppMuted, fontSize = 13.sp,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 8.dp))
-            AboutRow(stringResource(R.string.about_discord), stringResource(R.string.about_discord_detail)) { openUrl(context, DISCORD_URL) }
-            AboutRow(stringResource(R.string.about_github), stringResource(R.string.about_github_detail)) { openUrl(context, "https://github.com/$repo") }
-            Text(stringResource(R.string.support_body), color = AppMuted, fontSize = 13.sp,
+            AboutRow(stringResource(R.string.about_github), stringResource(R.string.about_github_detail)) { openUrl(context, REPO_URL) }
+            Text(stringResource(R.string.about_star_body), color = AppMuted, fontSize = 13.sp,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 12.dp))
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().height(48.dp).clip(RoundedCornerShape(50))
-                    .background(AppAccent).pressable(0.96f) { SupportReminder.open(context) },
-            ) { Text(stringResource(R.string.support_action), color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
-            GitHubSponsorButton(Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp))
+            StarOnGitHubButton(Modifier.padding(horizontal = 20.dp))
         }
     }
 }
 
-/** GitHub Sponsors, under the Ko-fi button: outlined, so Ko-fi stays the main one. */
+/** "Star on GitHub": opens the repository, where a star helps others find the app. */
 @Composable
-fun GitHubSponsorButton(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
+fun StarOnGitHubButton(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
     val context = LocalContext.current
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(50))
-            .border(1.dp, AppText.copy(alpha = 0.6f), RoundedCornerShape(50))
-            .pressable(0.96f) { onClick?.invoke() ?: SupportReminder.openSponsors(context) },
-    ) { Text(stringResource(R.string.support_github_action), color = AppText, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+            .background(AppAccent).pressable(0.96f) { onClick?.invoke(); openUrl(context, REPO_URL) },
+    ) { Text("★ " + stringResource(R.string.about_star_action), color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
 }
 
-/** "Support Myspoti" from the profile menu: Ko-fi or GitHub Sponsors, the user picks. */
+/** "Support Myspoti" from the profile menu: a star on GitHub. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SupportSheet(onDismiss: () -> Unit) {
@@ -114,14 +107,9 @@ fun SupportSheet(onDismiss: () -> Unit) {
     ) {
         androidx.compose.foundation.layout.Column(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 28.dp)) {
             Text(stringResource(R.string.support_title), color = AppText, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            Text(stringResource(R.string.support_body), color = AppMuted, fontSize = 14.sp,
+            Text(stringResource(R.string.about_star_body), color = AppMuted, fontSize = 14.sp,
                 modifier = Modifier.padding(top = 10.dp, bottom = 18.dp))
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(50))
-                    .background(AppAccent).pressable(0.96f) { onDismiss(); SupportReminder.open(context) },
-            ) { Text(stringResource(R.string.support_action), color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
-            GitHubSponsorButton(Modifier.padding(top = 10.dp)) { onDismiss(); SupportReminder.openSponsors(context) }
+            StarOnGitHubButton { onDismiss() }
         }
     }
 }
