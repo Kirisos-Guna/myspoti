@@ -119,7 +119,14 @@ class SpotifyHttp(
     }
 
     /** Drops the cached web token (it belongs to one account); the client token is kept. */
-    suspend fun forgetWebToken() = lock.withLock { web = null; runCatching { tokenStore?.save(storedKey(), "") } }
+    suspend fun forgetWebToken() = lock.withLock { dropWebToken() }
+
+    /**
+     * Forgets the web token in memory and the copy kept for the next launch. Clearing only the
+     * memory let [webToken] load the same refused token back from the store until it expired.
+     * Call with [lock] held.
+     */
+    private fun dropWebToken() { web = null; runCatching { tokenStore?.save(storedKey(), "") } }
 
     /** The credentials [send] uses, for a client on another HTTP stack (the native playback engine). */
     class Credentials(
@@ -232,7 +239,7 @@ class SpotifyHttp(
         // (log seen: an extension asked for a skipped-to song 10 s late, behind its ISRC lookup).
         // Writes still run to their end: a caller gone must not leave one half sent.
         val result = if (method == "GET") call.executeCancellable() else withContext(Dispatchers.IO) { call.execute().use { it.code to it.body.string() } }
-        if (result.first == 401) lock.withLock { web = null; runCatching { tokenStore?.save(storedKey(), "") } }
+        if (result.first == 401) lock.withLock { dropWebToken() }
         return result
     }
 
@@ -287,7 +294,7 @@ class SpotifyHttp(
                     if (m == "HEAD") "" else r.body.string())
             }
         }
-        if (result.status == 401 && kind == RawTarget.ACCOUNT) lock.withLock { web = null }
+        if (result.status == 401 && kind == RawTarget.ACCOUNT) lock.withLock { dropWebToken() }
         return result
     }
 
@@ -312,7 +319,7 @@ class SpotifyHttp(
             .method(method, body?.toRequestBody("application/x-protobuf".toMediaType()) ?: if (method == "GET" || method == "DELETE") null else ByteArray(0).toRequestBody(null))
             .build()
         val result = withContext(Dispatchers.IO) { http.newCall(request).execute().use { it.code to it.body.bytes() } }
-        if (result.first == 401) lock.withLock { web = null }
+        if (result.first == 401) lock.withLock { dropWebToken() }
         return result
     }
 

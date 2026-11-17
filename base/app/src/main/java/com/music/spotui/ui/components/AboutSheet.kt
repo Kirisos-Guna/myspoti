@@ -1,5 +1,7 @@
 package com.music.spotui.ui.components
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import com.music.spotui.ui.theme.tone
 import com.music.spotui.ui.theme.AppText
 import com.music.spotui.ui.theme.AppMuted
@@ -39,6 +41,7 @@ import app.myspoti.engine.BuildConfig
 import app.myspoti.engine.R
 import com.music.spotui.data.api.SupportReminder
 import com.music.spotui.ui.theme.AppAccent
+import kotlinx.coroutines.launch
 
 private val repo get() = BuildConfig.UPDATE_REPO.ifBlank { "Kirisos-Guna/myspoti" }
 val REPO_URL get() = "https://github.com/$repo"
@@ -76,9 +79,79 @@ fun AboutSheet(onDismiss: () -> Unit) {
             Text(stringResource(R.string.about_free), color = AppMuted, fontSize = 13.sp,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 8.dp))
             AboutRow(stringResource(R.string.about_github), stringResource(R.string.about_github_detail)) { openUrl(context, REPO_URL) }
+            UpdateRows()
             Text(stringResource(R.string.about_star_body), color = AppMuted, fontSize = 13.sp,
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 12.dp))
             StarOnGitHubButton(Modifier.padding(horizontal = 20.dp))
+        }
+    }
+}
+
+/**
+ * "Update channel" (stable or beta, chosen in a dialog) and "Check for updates" (asks GitHub now;
+ * a newer release opens the app's update card).
+ */
+@Composable
+private fun UpdateRows() {
+    val context = LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val check = com.music.spotui.data.api.rememberUpdateCheckState(context)
+    var picking by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    val beta = com.music.spotui.data.api.UpdateChecker.isBeta
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().clickable { picking = true }.padding(horizontal = 20.dp, vertical = 10.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.update_channel_title), color = AppText, fontSize = 16.sp)
+            Text(stringResource(R.string.update_channel_detail), color = AppMuted, fontSize = 12.sp)
+        }
+        Text(stringResource(if (beta) R.string.update_channel_beta else R.string.update_channel_stable),
+            color = AppText, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 12.dp))
+    }
+    AboutRow(
+        stringResource(R.string.settings_update_refresh),
+        when {
+            check.checking -> "…"
+            check.message != null -> check.message!!
+            else -> stringResource(R.string.update_check_detail)
+        },
+    ) { scope.launch { check.run() } }
+    if (picking) UpdateChannelDialog(beta, onPick = { com.music.spotui.data.api.UpdateChecker.setBetaChannel(context, it); picking = false }) { picking = false }
+}
+
+@Composable
+private fun UpdateChannelDialog(beta: Boolean, onPick: (Boolean) -> Unit, onDismiss: () -> Unit) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Column(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(tone(0xFF1E1E1E))
+                .border(1.dp, AppText.copy(alpha = 0.12f), RoundedCornerShape(28.dp)).padding(24.dp),
+        ) {
+            Text(stringResource(R.string.update_channel_title), color = AppText, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            ChannelOption(stringResource(R.string.update_channel_stable), stringResource(R.string.update_channel_stable_detail), !beta) { onPick(false) }
+            ChannelOption(stringResource(R.string.update_channel_beta), stringResource(R.string.update_channel_beta_detail), beta) { onPick(true) }
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.padding(top = 20.dp).fillMaxWidth().height(48.dp).clip(RoundedCornerShape(16.dp))
+                    .background(AppText.copy(alpha = 0.08f)).clickable(onClick = onDismiss),
+            ) { Text(stringResource(R.string.update_channel_cancel), color = AppText, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+        }
+    }
+}
+
+@Composable
+private fun ChannelOption(title: String, detail: String, selected: Boolean, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(top = 16.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 6.dp),
+    ) {
+        androidx.compose.material3.RadioButton(
+            selected = selected, onClick = onClick,
+            colors = androidx.compose.material3.RadioButtonDefaults.colors(selectedColor = AppText, unselectedColor = AppMuted),
+        )
+        Column(Modifier.padding(start = 8.dp)) {
+            Text(title, color = AppText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(detail, color = AppMuted, fontSize = 13.sp)
         }
     }
 }

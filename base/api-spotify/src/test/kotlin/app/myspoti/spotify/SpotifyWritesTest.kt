@@ -69,6 +69,19 @@ class SpotifyWritesTest {
         block(host, bridge)
     }
 
+    @Test fun `a playlist read in pages shorter than asked loses no song`() = runBridge({ JsonNull }) { _, bridge ->
+        // The server caps a page at 50 rows whatever limit is asked.
+        val gql = FakeGql { _, v ->
+            val offset = v["offset"]!!.jsonPrimitive.content.toInt()
+            playlistPage(total = 120, offset = offset, limit = minOf(50, v["limit"]!!.jsonPrimitive.content.toInt()))
+        }
+        val playlists = SpotifyPlaylists(gql, bridge, SpotifyHttp(OkHttpClient(), bridge))
+        val first = playlists.tracks("spotify:playlist:p", 0, 100)
+        assertEquals(50, first.nextOffset)
+        val all = playlists.sortedTracks("spotify:playlist:p", PlaylistSort.CUSTOM, false)
+        assertEquals((0 until 120).map { "spotify:track:t$it" }, all.map { it.uri })
+    }
+
     @Test fun `don't play this artist writes the artistban set and nothing else`() = runBridge({ JsonNull }) { host, bridge ->
         val extras = SpotifyTrackExtras(FakeGql { _, _ -> JsonNull }, bridge, SpotifyHttp(OkHttpClient(), bridge))
         extras.setArtistBanned("spotify:artist:a", true)

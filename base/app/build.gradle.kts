@@ -46,7 +46,9 @@ android {
     // "-beta" as in UpdateChecker.isBeta, one predicate for the app id, the label and the log stripping.
     val beta = findProperty("appVersionName") == null || version.contains("-beta")
     defaultConfig {
-        applicationId = if (automixLab) "app.myspoti.automixlab" else if (beta) "app.myspoti.beta" else "app.myspoti"
+        // One app for every channel: stable and beta updates install over each other (the channel is a
+        // setting in About), so both are "app.myspoti", signed with the same key.
+        applicationId = if (automixLab) "app.myspoti.automixlab" else "app.myspoti"
         manifestPlaceholders["appLabel"] = if (automixLab) "Myspoti Mix Lab" else "Myspoti"
         // The adb command line (com.music.spotui.cli): betas and debug builds only.
         manifestPlaceholders["cliEnabled"] = beta.toString()
@@ -97,8 +99,6 @@ android {
 
     buildTypes {
         debug {
-            // Installs next to the release apps (own data, own sign-in).
-            if (!automixLab) applicationIdSuffix = ".dev"
             manifestPlaceholders["appLabel"] = if (automixLab) "Myspoti Mix Lab" else "Myspoti"
             manifestPlaceholders["cliEnabled"] = "true"
             buildConfigField("String", "UPDATE_REPO", "\"\"")
@@ -110,7 +110,6 @@ android {
             // -PoverDev: the optimised build under the dev app's id, to measure the speed of a
             // beta on the test phone without replacing the signed beta installed there.
             if (findProperty("overDev") != null && !automixLab) {
-                applicationIdSuffix = ".dev"
                 manifestPlaceholders["appLabel"] = "Myspoti"
                 buildConfigField("String", "UPDATE_REPO", "\"\"")
             }

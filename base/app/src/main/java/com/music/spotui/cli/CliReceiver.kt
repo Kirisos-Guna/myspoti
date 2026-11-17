@@ -400,7 +400,7 @@ class CliReceiver : BroadcastReceiver() {
         private const val READ_MS = 15_000L
 
         /** Debug and beta builds; the manifest leaves the receiver off in the others too. */
-        val enabled: Boolean get() = app.myspoti.engine.BuildConfig.DEBUG || com.music.spotui.data.api.UpdateChecker.isBeta
+        val enabled: Boolean get() = app.myspoti.engine.BuildConfig.DEBUG || com.music.spotui.data.api.UpdateChecker.isBetaBuild
 
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 

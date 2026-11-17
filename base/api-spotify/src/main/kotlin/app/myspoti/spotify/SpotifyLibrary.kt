@@ -35,6 +35,32 @@ import kotlinx.serialization.json.jsonPrimitive
 private fun uris(list: List<Uri>) = json(mapOf("uris" to list))
 
 /**
+ * Folders have two uri forms: `…:folder:{hash}` (stable, used by the library list and this API)
+ * and `…:folder:{hash}:{name}` in the rootlist, which changes on rename. Writes need the latter.
+ */
+internal fun stableFolderUri(uri: Uri): Uri {
+    val i = uri.indexOf(":folder:")
+    if (i < 0) return uri
+    val rest = uri.substring(i + ":folder:".length)
+    return uri.substring(0, i) + ":folder:" + rest.substringBefore(':')
+}
+
+/** The rootlist's current uri for a folder given in either form (see [stableFolderUri]). */
+internal suspend fun rootlistFolderUri(bridge: Bridge, uri: Uri): Uri {
+    val stable = stableFolderUri(uri)
+    fun find(items: List<JsonElement>): Uri? {
+        for (item in items) {
+            if (item.str("type") != "folder") continue
+            val u = item.str("uri") ?: continue
+            if (stableFolderUri(u) == stable) return u
+            find(item.list("items"))?.let { return it }
+        }
+        return null
+    }
+    return find(bridge.service("RootlistAPI", "getContents").list("items")) ?: throw GqlException("folder", "no folder $stable")
+}
+
+/**
  * The id of the shows filter among the [offered] ids of the library (`availableFilters`: the ids are
  * fixed words, the names are localised). "Podcasts" when none offered looks like one: that is the
  * id the app sent before, and an id the server does not know fails the whole list (#136).
@@ -149,30 +175,7 @@ class SpotifyLibrary(private val bridge: Bridge, private val gql: Gql) : Library
     override suspend fun pin(uri: Uri) { gql.query("pinLibraryItem", vars("pinnableItemUri" to uri)); changed() }
     override suspend fun unpin(uri: Uri) { gql.query("unpinLibraryItem", vars("pinnableItemUri" to uri)); changed() }
 
-    /**
-     * Folders have two uri forms: `…:folder:{hash}` (stable, used by the library list and this API)
-     * and `…:folder:{hash}:{name}` in the rootlist, which changes on rename. Writes need the latter.
-     */
-    private fun stableFolderUri(uri: Uri): Uri {
-        val i = uri.indexOf(":folder:")
-        if (i < 0) return uri
-        val rest = uri.substring(i + ":folder:".length)
-        return uri.substring(0, i) + ":folder:" + rest.substringBefore(':')
-    }
-
-    private suspend fun rootlistFolderUri(uri: Uri): Uri {
-        val stable = stableFolderUri(uri)
-        fun find(items: List<JsonElement>): Uri? {
-            for (item in items) {
-                if (item.str("type") != "folder") continue
-                val u = item.str("uri") ?: continue
-                if (stableFolderUri(u) == stable) return u
-                find(item.list("items"))?.let { return it }
-            }
-            return null
-        }
-        return find(bridge.service("RootlistAPI", "getContents").list("items")) ?: throw GqlException("folder", "no folder $stable")
-    }
+    private suspend fun rootlistFolderUri(uri: Uri): Uri = rootlistFolderUri(bridge, uri)
 
     override suspend fun createFolder(name: String, parentFolderUri: Uri?): Uri {
         val r = bridge.service("RootlistAPI", "createFolder", JsonPrimitive(name), json(mapOf("before" to "start")))
@@ -212,9 +215,12 @@ class SpotifyPlaylists(private val gql: Gql, private val bridge: Bridge, private
             "uri" to uri, "offset" to offset, "limit" to limit, "includeEpisodeContentRatingsV2" to true,
         )).entity("data.playlistV2", "fetchPlaylistContents")
         val content = p.at("content")
-        val items = content.list("items").mapNotNull { playlistItem(it.at("itemV2.data"), it.str("uid"))?.copy(addedAt = it.str("addedAt.isoString")) }
+        val rows = content.list("items")
+        val items = rows.mapNotNull { playlistItem(it.at("itemV2.data"), it.str("uid"))?.copy(addedAt = it.str("addedAt.isoString")) }
         val total = content.int("totalCount") ?: items.size
-        return Page(items, offset, total, (offset + limit).takeIf { it < total })
+        // Advance by the rows Spotify returned, not by [limit]: a shorter page (the server caps
+        // its page size) otherwise skipped the songs between, and they never showed.
+        return Page(items, offset, total, (offset + rows.size).takeIf { rows.isNotEmpty() && it < total })
     }
 
     private fun rootPlaylists(root: JsonElement): List<Playlist> {

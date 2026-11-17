@@ -209,8 +209,8 @@ class MainActivity : AppCompatActivity() {
                         com.music.spotui.extensions.ExtensionConfirmHost()
                         // An extension's sign-in page, in a web view of its own.
                         com.music.spotui.extensions.ExtensionAuthHost()
-                        // Beta and dev builds only: hold the faint dot to copy the recent logs.
-                        if (com.music.spotui.data.api.UpdateChecker.isBeta || app.myspoti.engine.BuildConfig.DEBUG)
+                        // Beta channel only (About > Update channel): the bug button sends the recent logs.
+                        if (com.music.spotui.data.api.UpdateChecker.isBeta)
                             com.music.spotui.ui.components.BetaLogButton(
                                 androidx.compose.ui.Modifier.align(androidx.compose.ui.Alignment.BottomEnd))
                         // Picture-in-picture: the clip alone, over the app (which stays composed underneath,

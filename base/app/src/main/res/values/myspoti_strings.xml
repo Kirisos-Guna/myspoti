@@ -142,6 +142,14 @@
     <string name="about_free">Free, open source and without ads. Not affiliated with Spotify.</string>
     <string name="about_star_body">Myspoti is free and open source. If you enjoy it, a star on GitHub helps others find it.</string>
     <string name="about_star_action">Star on GitHub</string>
+    <string name="update_channel_title">Update channel</string>
+    <string name="update_channel_detail">Choose the type of app updates to receive</string>
+    <string name="update_channel_stable">Stable</string>
+    <string name="update_channel_stable_detail">Intended for everyday use.</string>
+    <string name="update_channel_beta">Beta</string>
+    <string name="update_channel_beta_detail">Early updates that may contain bugs, break features, or behave unexpectedly.</string>
+    <string name="update_channel_cancel">Cancel</string>
+    <string name="update_check_detail">Download the latest release</string>
     <string name="library_reorder_hint">Hold a playlist, then drag it to move it</string>
     <string name="library_reorder_reset">Back to Spotify\'s order</string>
     <string name="song_radio_failed">Couldn\'t open this song\'s radio</string>

@@ -13,15 +13,14 @@ android {
     val version = (findProperty("appVersionName") as String?) ?: "1.0.0"
     val beta = findProperty("appVersionName") == null || version.contains("-beta")
     defaultConfig {
-        // As the phone's app (base/app): betas "app.myspoti.beta", releases "app.myspoti", debug builds ".dev".
-        applicationId = if (beta) "app.myspoti.beta" else "app.myspoti"
+        // As the phone's app (base/app): one package for every channel.
+        applicationId = "app.myspoti"
         minSdk = 30
         targetSdk = 36
         versionCode = (findProperty("appVersionCode") as String?)?.toIntOrNull() ?: 200
         versionName = version
     }
     buildTypes {
-        debug { applicationIdSuffix = ".dev" }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
