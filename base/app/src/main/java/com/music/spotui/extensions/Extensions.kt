@@ -930,6 +930,15 @@ object Extensions {
      * asked before the song plays (the next one of the queue), which the extension is told. Each
      * call is one [PlayAttempt] ([attempts]): the sources asked or skipped, and the one chosen.
      */
+    /** Per song: the audio sources above the one that played it that did not get to answer (see [audio]). */
+    private val passedOver = ConcurrentHashMap<String, List<String>>()
+
+    /**
+     * The sources ranked above the one [trackId] plays from that were cut short or timed out when
+     * it was asked, in priority order: worth asking again while it plays (SourceUpgrade).
+     */
+    fun passedOver(trackId: String): List<String> = passedOver[trackId].orEmpty()
+
     suspend fun audio(track: TrackInfo, timeoutMs: Long = AUDIO_MS, ahead: Boolean = false): AudioStream? {
         if (!isReady) return null
         val attempt = attempts.start(track.id, track.title, ahead)
@@ -987,6 +996,12 @@ object Extensions {
         }
         misses.forget(track.id)
         val (c, a) = found
+        // Sources above the one chosen that were cut short (a faster one answered within the grace)
+        // or timed out: they may still have it, in their own better quality (see SourceUpgrade).
+        val chosenAt = asked.indexOfFirst { it.first == c.first }
+        val passed = asked.take(chosenAt.coerceAtLeast(0)).map { it.first }
+            .filter { id -> answers[id].let { it == null || it.outcome == Outcome.Network().key } }
+        if (passed.isEmpty()) passedOver.remove(track.id) else passedOver[track.id] = passed
         log(c.first, "audio for ${track.title} ($ms ms)")
         did(Area.AUDIO, c.first, "Audio of ${track.title} from ${c.second.manifest.name}")
         val own = qualityLine(c.first, app.myspoti.extensions.SettingSection.PLAYBACK)

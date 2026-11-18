@@ -1459,7 +1459,9 @@ fun PlayerConnectRow(
                 var nerd by remember { mutableStateOf(false) }
                 if (quality) com.music.spotui.ui.components.QualitySheet { quality = false }
                 if (nerd) com.music.spotui.ui.components.StatsForNerdsSheet { nerd = false }
-                if (source.isNotBlank() && com.music.spotui.data.preferences.PlayerSourceLinePref.shown) Text(
+                if (source.isNotBlank() && com.music.spotui.data.preferences.PlayerSourceLinePref.shown) Row(verticalAlignment = Alignment.CenterVertically) {
+                com.music.spotui.ui.components.QualityBadge(tint = com.music.spotui.ui.theme.AppMuted, onClick = { quality = true }, modifier = Modifier.padding(end = 6.dp))
+                Text(
                     text = source,
                     color = com.music.spotui.ui.theme.AppMuted,
                     fontSize = 11.sp,
@@ -1472,6 +1474,7 @@ fun PlayerConnectRow(
                         onLongClick = { nerd = true },
                     ) { quality = true },
                 )
+                }
             }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {

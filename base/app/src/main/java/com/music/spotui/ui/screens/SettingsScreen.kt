@@ -382,6 +382,17 @@ fun SettingsScreen(navController: NavController) {
                 checked = energy.blackPreference,
                 onChecked = app.myspoti.power.EnergySettings::setBlackBackground,
             )
+            run {
+                var picking by remember { androidx.compose.runtime.mutableStateOf(false) }
+                Row(Modifier.fillMaxWidth().clickable { picking = true }.padding(horizontal = 20.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.refresh_rate_title), color = AppText, fontSize = 16.sp)
+                        Text(stringResource(R.string.refresh_rate_detail), color = AppMuted, fontSize = 12.sp)
+                    }
+                    Text(com.music.spotui.ui.components.refreshRateLabel(), color = AppText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                }
+                if (picking) com.music.spotui.ui.components.RefreshRateDialog { picking = false }
+            }
             OptionRow(
                 label = stringResource(R.string.settings_item_canvas_title),
                 detail = stringResource(if (energy.policy.saverEnabled) R.string.energy_saver_summary else R.string.video_settings_canvas_subtitle),
@@ -1263,6 +1274,13 @@ private fun AboutRow() {
     }
     if (picking) com.music.spotui.ui.components.UpdateChannelDialog(beta,
         onPick = { com.music.spotui.data.api.UpdateChecker.setBetaChannel(ctx, it); picking = false }) { picking = false }
+    // Last.fm / ListenBrainz.
+    var scrobbling by remember { androidx.compose.runtime.mutableStateOf(false) }
+    Column(Modifier.fillMaxWidth().clickable { scrobbling = true }.padding(horizontal = 20.dp, vertical = 10.dp)) {
+        Text(stringResource(R.string.scrobble_title), color = AppText, fontSize = 16.sp)
+        Text(com.music.spotui.ui.components.scrobbleSummary(), color = AppMuted, fontSize = 12.sp)
+    }
+    if (scrobbling) com.music.spotui.ui.components.ScrobbleDialog { scrobbling = false }
 }
 
 /**

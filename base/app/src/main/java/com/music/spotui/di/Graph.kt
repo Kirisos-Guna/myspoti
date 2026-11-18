@@ -34,6 +34,12 @@ object Graph {
         com.music.spotui.data.api.SupportReminder.init(application)
         // The update channel (stable or beta) chosen in About.
         com.music.spotui.data.api.UpdateChecker.init(application)
+        // "Even out volume" for the local player's songs.
+        com.music.spotui.di.Leveller.init(application)
+        com.music.spotui.di.SourceUpgrade.init(application)
+        // Last.fm / ListenBrainz, when connected.
+        com.music.spotui.data.scrobble.Scrobbler.init(application)
+        com.music.spotui.ui.look.RefreshRate.init(application)
         com.music.spotui.data.offline.OfflineStore.init(application)
         com.music.spotui.data.offline.OfflineCollections.init(application)
         SongPlayer.startLibraryOutbox(application)

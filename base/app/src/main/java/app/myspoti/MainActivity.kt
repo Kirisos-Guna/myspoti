@@ -390,6 +390,8 @@ class MainActivity : AppCompatActivity() {
         // `screen_off_timeout`, so a long unattended run holds the screen on from in here.
         if (prefs.getBoolean("keep_screen_on", false)) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        // The refresh rate chosen in Settings > Display (automatic by default).
+        com.music.spotui.ui.look.RefreshRate.apply(this)
     }
 
     override fun onStop() {

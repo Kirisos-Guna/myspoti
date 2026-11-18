@@ -151,7 +151,7 @@ private fun ChannelOption(title: String, detail: String, selected: Boolean, onCl
         )
         Column(Modifier.padding(start = 8.dp)) {
             Text(title, color = AppText, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            Text(detail, color = AppMuted, fontSize = 13.sp)
+            if (detail.isNotEmpty()) Text(detail, color = AppMuted, fontSize = 13.sp)
         }
     }
 }
@@ -192,5 +192,42 @@ private fun AboutRow(title: String, detail: String, onClick: () -> Unit) {
     Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 10.dp)) {
         Text(title, color = AppText, fontSize = 16.sp)
         Text(detail, color = AppMuted, fontSize = 12.sp)
+    }
+}
+
+/** The refresh-rate row's value: "Automatic" or "120 Hz". */
+@Composable
+fun refreshRateLabel(): String = com.music.spotui.ui.look.RefreshRate.chosen.let { hz ->
+    if (hz == 0) stringResource(R.string.refresh_rate_auto) else stringResource(R.string.refresh_rate_hz, hz)
+}
+
+/** Picks the screen refresh rate (see RefreshRate): automatic, or one the screen offers. */
+@Composable
+internal fun RefreshRateDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val activity = context as? android.app.Activity ?: (context as? android.content.ContextWrapper)?.baseContext as? android.app.Activity
+    val rates = androidx.compose.runtime.remember { activity?.let { com.music.spotui.ui.look.RefreshRate.supported(it) }.orEmpty() }
+    val chosen = com.music.spotui.ui.look.RefreshRate.chosen
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Column(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(tone(0xFF1E1E1E))
+                .border(1.dp, AppText.copy(alpha = 0.12f), RoundedCornerShape(28.dp)).padding(24.dp),
+        ) {
+            Text(stringResource(R.string.refresh_rate_title), color = AppText, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.refresh_rate_detail), color = AppMuted, fontSize = 13.sp, modifier = Modifier.padding(top = 6.dp))
+            ChannelOption(stringResource(R.string.refresh_rate_auto), stringResource(R.string.refresh_rate_auto_detail), chosen == 0) {
+                com.music.spotui.ui.look.RefreshRate.set(context, 0); onDismiss()
+            }
+            rates.forEach { hz ->
+                ChannelOption(stringResource(R.string.refresh_rate_hz, hz), "", chosen == hz) {
+                    com.music.spotui.ui.look.RefreshRate.set(context, hz); onDismiss()
+                }
+            }
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.padding(top = 20.dp).fillMaxWidth().height(48.dp).clip(RoundedCornerShape(16.dp))
+                    .background(AppText.copy(alpha = 0.08f)).clickable(onClick = onDismiss),
+            ) { Text(stringResource(R.string.update_channel_cancel), color = AppText, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+        }
     }
 }

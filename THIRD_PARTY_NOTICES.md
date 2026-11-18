@@ -54,6 +54,11 @@ adapted from BitChord's `app/src/main/java/com/music/bitchord/playback/Equalizer
 `b690dc1`): its state-variable filter sections, their coefficients and the gliding of a change. It
 stays under the GPL-3.0-or-later and says so in its header.
 
+The local player's volume levelling, `base/app/src/main/java/com/music/spotui/di/LoudnessProcessor.kt`,
+is adapted from BitChord's `app/src/main/java/com/music/bitchord/playback/LoudnessProcessor.kt` (commit
+`acf219a`): its per-player gain, glide and peak limiter. It stays under the GPL-3.0-or-later and says
+so in its header.
+
 No BitChord fonts, icons, images or brand are included.
 
 Code that BitChord itself carries from other projects, kept with its own header:

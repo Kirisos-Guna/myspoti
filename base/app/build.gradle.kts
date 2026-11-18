@@ -62,6 +62,11 @@ android {
         // Not in the dev and Mix Lab builds (below): no release carries their app id.
         buildConfigField("String", "UPDATE_REPO", "\"${if (automixLab) "" else (findProperty("updateRepo") as String?) ?: System.getenv("MYSPOTI_UPDATE_REPO") ?: "Kirisos-Guna/myspoti"}\"")
         buildConfigField("String", "APK_NAME", "\"$APK_NAME\"")
+        // Last.fm scrobbling: the app's API key and secret (https://www.last.fm/api/account/create),
+        // from -PlastfmApiKey / -PlastfmSecret (or ~/.gradle/gradle.properties) or the environment.
+        // Empty: Last.fm is not offered in this build (ListenBrainz still is).
+        buildConfigField("String", "LASTFM_API_KEY", "\"${(findProperty("lastfmApiKey") as String?) ?: System.getenv("LASTFM_API_KEY") ?: ""}\"")
+        buildConfigField("String", "LASTFM_SECRET", "\"${(findProperty("lastfmSecret") as String?) ?: System.getenv("LASTFM_SECRET") ?: ""}\"")
         // -Pabis=arm64-v8a: one APK for one phone (the test builds). Without it, the ABI splits below.
         (findProperty("abis") as String?)?.let { ndk { abiFilters += it.split(",") } }
         // On-device tests (codecs): ./gradlew connectedDebugAndroidTest

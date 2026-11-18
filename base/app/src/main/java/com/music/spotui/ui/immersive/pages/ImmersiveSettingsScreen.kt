@@ -927,6 +927,13 @@ private fun DisplayPage(open: (SettingsPage) -> Unit, back: () -> Unit) {
                 ImmersiveSwitchRow(stringResource(R.string.settings_amoled_theme), checked = energy.blackPreference,
                     onChecked = app.myspoti.power.EnergySettings::setBlackBackground, detail = stringResource(R.string.settings_amoled_theme_subtitle))
             }
+            row {
+                var picking by remember { mutableStateOf(false) }
+                ImmersiveGroupRow(stringResource(R.string.refresh_rate_title), detail = stringResource(R.string.refresh_rate_detail),
+                    onClick = { picking = true },
+                    trailing = { Text(com.music.spotui.ui.components.refreshRateLabel(), color = Immersive.TextSecondary, modifier = Modifier.padding(end = 8.dp)) })
+                if (picking) com.music.spotui.ui.components.RefreshRateDialog { picking = false }
+            }
             // The looping visuals, as in the Classic settings: off while the energy saver holds them.
             row {
                 ImmersiveSwitchRow(stringResource(R.string.settings_item_canvas_title),
@@ -1147,6 +1154,13 @@ private fun AppPage(navController: NavController, back: () -> Unit) {
                         }
                     },
                 )
+            }
+        }
+        immersiveGroup("scrobbling") {
+            row {
+                var open by remember { mutableStateOf(false) }
+                ImmersiveGroupRow(stringResource(R.string.scrobble_title), detail = com.music.spotui.ui.components.scrobbleSummary(), onClick = { open = true })
+                if (open) com.music.spotui.ui.components.ScrobbleDialog { open = false }
             }
         }
         immersiveGroup("channel") {

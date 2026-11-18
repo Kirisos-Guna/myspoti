@@ -1,5 +1,6 @@
 package com.music.spotui.ui.immersive.pages
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -302,6 +303,17 @@ private fun androidx.compose.foundation.lazy.LazyListScope.phoneStats(
                 stringResource(R.string.recap_sources, src[ListenHistory.Source.SPOTIFY] ?: 0, src[ListenHistory.Source.DOWNLOAD] ?: 0, src[ListenHistory.Source.LOCAL] ?: 0),
                 style = Immersive.Caption, modifier = Modifier.padding(top = 8.dp),
             )
+            if (recap.listens > 0) {
+                var story by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+                val label = stringResource(periodLabels[period])
+                androidx.compose.foundation.layout.Box(
+                    contentAlignment = androidx.compose.ui.Alignment.Center,
+                    modifier = Modifier.padding(top = 16.dp).fillMaxWidth().height(48.dp)
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(50)).background(Immersive.Accent)
+                        .then(Modifier.clickable { story = true }),
+                ) { Text(stringResource(R.string.recap_story_play), color = androidx.compose.ui.graphics.Color.Black, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) }
+                if (story) com.music.spotui.ui.components.RecapStory(recap, label) { story = false }
+            }
         }
     }
     item(key = "weekly") { ImmersiveWeeklyChart() }

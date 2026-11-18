@@ -1018,6 +1018,8 @@ object SongPlayer {
     private var listenPlayedMs = 0L
     private var listenTickAt = 0L
     private var listenWasPlaying = false
+    /** When the current listen began (wall clock): its scrobble's timestamp. */
+    private var listenStartedAt = 0L
 
     /** Adds the time played since the last call; a new [key] closes the previous listen. */
     private fun trackListen(key: String, song: SongsModel?, source: com.music.spotui.data.local.ListenHistory.Source, isPlaying: Boolean) {
@@ -1029,8 +1031,11 @@ object SongPlayer {
                     System.currentTimeMillis(), listenKey, s.title, s.singer, s.album, s.coverUri, listenPlayedMs, listenSource,
                     com.music.spotui.data.local.ListenHistory.artistsOf(s.singer, s.artistIds),
                 ))
+                com.music.spotui.data.scrobble.Scrobbler.finished(s.title, s.singer, s.album, s.durationMs.toLong(), listenPlayedMs, listenStartedAt, listenSource)
             }
             listenKey = key; listenSong = song; listenSource = source; listenPlayedMs = 0
+            listenStartedAt = System.currentTimeMillis()
+            song?.let { com.music.spotui.data.scrobble.Scrobbler.nowPlaying(it.title, it.singer, it.album, it.durationMs.toLong(), source) }
         }
         listenTickAt = now
         listenWasPlaying = isPlaying
@@ -1536,6 +1541,63 @@ object SongPlayer {
                 done(SourceSwitch.PLAYING)
             }
         }
+    }
+
+    /** The songs whose source upgrade was already tried in this play (see [upgradeSource]). */
+    private val upgradeTried = HashSet<String>()
+
+    /**
+     * The second look (after BitChord's QualityUpgrade): a song the local player streams from a
+     * source below one that was cut short or timed out when it was asked (Extensions.passedOver) has
+     * those sources asked again while it plays, in priority order. The first that has it takes over
+     * where the song is (the user's source order is not changed, as a pick in the player would).
+     * Once per song per play; not on mobile data with the data saver, not while casting, routing or
+     * in an AutoMix blend, and not in the last half-minute of a song.
+     */
+    fun upgradeSource() {
+        if (!SourceUpgrade.on) return
+        val t = LocalPlayer.current() ?: return
+        val trackId = streamedTrackId(t).takeIf { it.isNotBlank() } ?: return
+        val above = com.music.spotui.extensions.Extensions.passedOver(trackId)
+        if (above.isEmpty() || !upgradeTried.add(trackId)) return
+        if (upgradeTried.size > 200) upgradeTried.clear()
+        val song = localSong(t)
+        scope.launch {
+            kotlinx.coroutines.delay(SourceUpgrade.START_DELAY_MS)
+            for (id in above) {
+                if (!stillUpgradable(trackId)) return@launch
+                val stream = runCatching {
+                    kotlinx.coroutines.withTimeoutOrNull(SourceUpgrade.ASK_MS) {
+                        val ext = com.music.spotui.extensions.Extensions
+                        ext.audioFrom(id, ext.trackInfo(trackId, song.title, song.singer, song.album, song.durationMs.toLong(), song.coverUri))
+                    }
+                }.getOrNull() ?: continue
+                // A clip under the full song's name (a 30 s preview) is not an upgrade.
+                val announced = stream.durationMs
+                if (announced != null && song.durationMs > 0 && kotlin.math.abs(announced - song.durationMs) > SourceUpgrade.LENGTH_SLACK_MS) {
+                    app.myspoti.host.android.Logbook.log("upgrade: ${song.title} from $id refused (length $announced ms, song ${song.durationMs} ms)")
+                    continue
+                }
+                main.post {
+                    if (!stillUpgradable(trackId)) return@post
+                    app.myspoti.host.android.Logbook.log("upgrade: ${song.title} now from $id (${stream.qualityLabel() ?: "quality not announced"})")
+                    com.music.spotui.extensions.ExtensionAudio.use(trackId, stream.copy(providerId = id))
+                    LocalPlayer.reopen()
+                }
+                return@launch
+            }
+        }
+    }
+
+    /** The song is still the one playing locally, far enough from its end, and nothing else holds the player. */
+    private fun stillUpgradable(trackId: String): Boolean {
+        if (!LocalPlayer.active.value || routing || com.music.spotui.cast.CastPlayback.active) return false
+        if (com.music.spotui.data.DataSaver.active && com.music.spotui.data.DataSaver.metered) return false
+        if (LocalPlayer.mixing) return false
+        val t = LocalPlayer.current() ?: return false
+        if (streamedTrackId(t) != trackId) return false
+        val left = LocalPlayer.duration() - LocalPlayer.position()
+        return left > SourceUpgrade.MIN_LEFT_MS
     }
 
     /**

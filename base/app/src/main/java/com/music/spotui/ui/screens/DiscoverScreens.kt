@@ -278,6 +278,14 @@ fun RecapScreen(navController: NavController) {
                 Column(Modifier.padding(16.dp, 20.dp)) {
                     Text(stringResource(R.string.recap_minutes, recap.minutes), color = AppText, fontSize = 30.sp, fontWeight = FontWeight.Bold)
                     Text(stringResource(R.string.recap_listens, recap.listens), color = Subtle, fontSize = 14.sp)
+                    if (recap.listens > 0) {
+                        var story by remember { mutableStateOf(false) }
+                        val label = stringResource(periods[period].first)
+                        androidx.compose.material3.Button(onClick = { story = true }, modifier = Modifier.padding(top = 10.dp)) {
+                            Text(stringResource(R.string.recap_story_play))
+                        }
+                        if (story) com.music.spotui.ui.components.RecapStory(recap, label) { story = false }
+                    }
                     Spacer(Modifier.height(10.dp))
                     val src = recap.bySource
                     Text(stringResource(R.string.recap_sources,
