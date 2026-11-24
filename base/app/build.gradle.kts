@@ -178,7 +178,7 @@ dependencies {
     // A real XML pull parser in unit tests (the TTML lyrics parser; the tests skip themselves without it).
     testImplementation("net.sf.kxml:kxml2:2.3.0")
     // Roborazzi asks for kotlinx-io 0.3.3; Ktor (removed) had raised it to 0.9.1, the version the unit tests ran with.
-    testImplementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-io-core:0.9.3")
     testImplementation("org.jetbrains.kotlinx:kotlinx-io-bytestring:0.9.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
